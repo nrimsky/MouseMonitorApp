@@ -103,7 +103,10 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetTextI18n")
     private fun showOnScreen(readMessage: String) {
         val textBox = binding.dataTextBox
-        textBox.text = readMessage
+        if (textBox.text.length > 20) {
+            textBox.text = ""
+        }
+        textBox.text = "${textBox.text}$readMessage"
     }
 
     private fun setupBluetoothService() {
