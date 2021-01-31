@@ -1,6 +1,7 @@
 package com.example.mousemonitor
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -82,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         bluetoothService?.cancel()
     }
 
+    // Message handler for data received from bluetooth service
     private val mHandler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
@@ -89,10 +91,19 @@ class MainActivity : AppCompatActivity() {
                     val readBuf = msg.obj as ByteArray
                     // construct a string from the valid bytes in the buffer
                     val readMessage = String(readBuf, 0, msg.arg1)
+                    // print to console
                     Log.d(TAG, readMessage)
+                    // show in app
+                    showOnScreen(readMessage)
                 }
             }
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun showOnScreen(readMessage: String) {
+        val textBox = binding.dataTextBox
+        textBox.text = readMessage
     }
 
     private fun setupBluetoothService() {

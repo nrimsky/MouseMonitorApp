@@ -21,5 +21,30 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </LinearLayout>
+    <LinearLayout
+        android:padding="20dp"
+        android:id="@+id/data_stream_layout"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/linear_layout"
+        android:showDividers="middle"
+        android:divider="@drawable/divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:textStyle="bold"
+            android:textSize="21sp"
+            android:text="@string/incoming_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/data_text_box"
+                android:text = "@string/no_data_so_far"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </ScrollView>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

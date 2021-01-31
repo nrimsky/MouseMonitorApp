@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">MouseMonitor</string>
     <string name="available_bluetooth_devices">Available bluetooth devices</string>
+    <string name="incoming_data">Incoming data</string>
+    <string name="no_data_so_far">No data so far</string>
 </resources>
