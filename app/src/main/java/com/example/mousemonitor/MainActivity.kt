@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
@@ -14,8 +13,8 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.mousemonitor.Constants.MESSAGE_READ
 import com.example.mousemonitor.databinding.ActivityMainBinding
-import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -23,9 +22,9 @@ class MainActivity : AppCompatActivity() {
     var bluetoothAdapter: BluetoothAdapter? = null
     var bluetoothService: BluetoothService? = null
     private lateinit var binding: ActivityMainBinding
+    var num_datapoints: Int = 0
 
     companion object {
-        const val MESSAGE_READ: Int = 0
         private const val PERMISSION_CODE = 1
         private const val REQUEST_ENABLE_BT = 2
         private const val TAG = "MainActivity"
@@ -102,9 +101,11 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun showOnScreen(readMessage: String) {
+        num_datapoints++
         val textBox = binding.dataTextBox
-        if (textBox.text.length > 20) {
+        if (num_datapoints > 100) {
             textBox.text = ""
+            num_datapoints = 0
         }
         textBox.text = "${textBox.text}$readMessage"
     }

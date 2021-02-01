@@ -50,7 +50,6 @@
             <TextView
                 android:textSize="18sp"
                 android:id="@+id/data_text_box"
-                android:text = "@string/no_data_so_far"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </ScrollView>

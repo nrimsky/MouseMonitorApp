@@ -4,17 +4,16 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.Handler
 import android.util.Log
+import com.example.mousemonitor.Constants.MESSAGE_READ
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
 
 
-class BluetoothService(
-        private val handler: Handler
-) {
+class BluetoothService( private val handler: Handler) {
+
     companion object {
         private const val TAG = "BluetoothService"
-        const val MESSAGE_READ: Int = 0
     }
 
     private var mConnectedThread: ConnectedThread? = null
