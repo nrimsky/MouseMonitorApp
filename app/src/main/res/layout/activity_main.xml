@@ -5,54 +5,55 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-    <TextView
-        android:padding="20dp"
-        android:id="@+id/available_device_title"
-        app:layout_constraintTop_toTopOf="parent"
-        android:textStyle="bold"
-        android:textSize="21sp"
-        android:text="@string/available_bluetooth_devices"
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <LinearLayout
-        android:padding="20dp"
-        android:id="@+id/linear_layout"
-        android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@id/available_device_title"
-        android:showDividers="middle"
-        android:divider="@drawable/divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:textSize="16sp"
-            android:text="@string/no_available_bluetooth_devices_please_try_connecting_to_the_arduino_in_settings"
+        android:layout_height="match_parent">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-    <LinearLayout
-        android:padding="20dp"
-        android:id="@+id/data_stream_layout"
-        android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@id/linear_layout"
-        android:showDividers="middle"
-        android:divider="@drawable/divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:textStyle="bold"
-            android:textSize="21sp"
-            android:text="@string/incoming_data"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:divider="@drawable/divider"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:showDividers="middle">
+
             <TextView
-                android:textSize="18sp"
-                android:id="@+id/data_text_box"
+                android:id="@+id/available_device_title"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-        </ScrollView>
-    </LinearLayout>
+                android:layout_height="wrap_content"
+                android:text="@string/available_bluetooth_devices"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/linear_layout"
+                android:showDividers="middle"
+                android:divider="@drawable/divider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_available_bluetooth_devices_please_try_connecting_to_the_arduino_in_settings"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/incoming_data"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/chartView"
+                android:layout_width="match_parent"
+                android:layout_height="300dp" />
+        </LinearLayout>
+
+
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

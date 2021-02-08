@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.*
 import android.util.Log
 import android.widget.Button
@@ -13,8 +14,14 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import com.example.mousemonitor.Constants.MESSAGE_CONNECTED
+import com.example.mousemonitor.Constants.MESSAGE_DISCONNECTED
 import com.example.mousemonitor.Constants.MESSAGE_READ
 import com.example.mousemonitor.databinding.ActivityMainBinding
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,7 +29,8 @@ class MainActivity : AppCompatActivity() {
     var bluetoothAdapter: BluetoothAdapter? = null
     var bluetoothService: BluetoothService? = null
     private lateinit var binding: ActivityMainBinding
-    var num_datapoints: Int = 0
+    private var numDatapoints: Int = 0
+    private var dataBuf: String = ""
 
     companion object {
         private const val PERMISSION_CODE = 1
@@ -36,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        setupGraph()
 
         checkBluetoothPermissions()
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -84,6 +93,7 @@ class MainActivity : AppCompatActivity() {
 
     // Message handler for data received from bluetooth service
     private val mHandler = object : Handler(Looper.getMainLooper()) {
+        @SuppressLint("SetTextI18n")
         override fun handleMessage(msg: Message) {
             when (msg.what) {
                 MESSAGE_READ -> {
@@ -95,19 +105,34 @@ class MainActivity : AppCompatActivity() {
                     // show in app
                     showOnScreen(readMessage)
                 }
+                MESSAGE_CONNECTED -> {
+                    val deviceName = msg.obj as String
+                    binding.availableDeviceTitle.text = "$deviceName Connected"
+                    binding.linearLayout.removeAllViews()
+                }
+                MESSAGE_DISCONNECTED -> {
+                    binding.availableDeviceTitle.text = "Disconnected"
+                }
             }
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun showOnScreen(readMessage: String) {
-        num_datapoints++
-        val textBox = binding.dataTextBox
-        if (num_datapoints > 100) {
-            textBox.text = ""
-            num_datapoints = 0
+        if (numDatapoints > 100) {
+            drawGraph(floatListFromString(dataBuf), 2.0f)
+            dataBuf = ""
+            numDatapoints = 0
         }
-        textBox.text = "${textBox.text}$readMessage"
+        dataBuf = "${dataBuf}$readMessage"
+        numDatapoints++
+    }
+
+
+    private fun floatListFromString(str: String): List<Float> {
+        return str
+                .split(",")
+                .filter { it != "" }
+                .map { it.toFloat() }
     }
 
     private fun setupBluetoothService() {
@@ -134,7 +159,9 @@ class MainActivity : AppCompatActivity() {
     private fun queryPairedDevices() {
         val pairedDevices: Set<BluetoothDevice>? =bluetoothAdapter?.bondedDevices
         bluetoothAdapter?.cancelDiscovery()
-        binding.linearLayout.removeAllViews()
+        if (pairedDevices != null && pairedDevices.isNotEmpty()) {
+            binding.linearLayout.removeAllViews()
+        }
         pairedDevices?.forEach { device ->
             addButtonForDevice(device)
         }
@@ -155,6 +182,42 @@ class MainActivity : AppCompatActivity() {
             connectToBluetoothDevice(device)
         }
         binding.linearLayout.addView(button)
+    }
+
+    // Graph
+
+    private fun setupGraph() {
+        with(binding.chartView) {
+            axisLeft.isEnabled = false
+            axisRight.isEnabled = false
+            xAxis.isEnabled = false
+            legend.isEnabled = false
+            description.isEnabled = false
+            setTouchEnabled(true)
+            isDragEnabled = true
+            setScaleEnabled(false)
+            setPinchZoom(false)
+        }
+    }
+
+    private fun drawGraph(data: List<Float>, period: Float) {
+        // TO DO: Real time plotting (add one value at a time)
+        // TO DO: Improve graph appearance
+        val dataPoints = data.mapIndexed { i, dataPoint ->
+            Entry(i*period, dataPoint)
+        }
+        val dataSet = LineDataSet(dataPoints, "Piezo readings")
+        with(dataSet) {
+            color = Color.BLUE
+            valueTextColor = Color.BLUE
+            highLightColor = Color.RED
+            setDrawValues(false)
+            lineWidth = 1.5f
+            isHighlightEnabled = true
+            setDrawHighlightIndicators(false)
+        }
+        binding.chartView.data = LineData(dataSet)
+        binding.chartView.invalidate()
     }
 
 }

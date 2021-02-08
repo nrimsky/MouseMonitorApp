@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.Handler
 import android.util.Log
+import com.example.mousemonitor.Constants.MESSAGE_CONNECTED
+import com.example.mousemonitor.Constants.MESSAGE_DISCONNECTED
 import com.example.mousemonitor.Constants.MESSAGE_READ
 import java.io.IOException
 import java.io.InputStream
@@ -72,6 +74,9 @@ class BluetoothService( private val handler: Handler) {
         override fun run() {
             var numBytes: Int // bytes returned from read()
 
+            val isConnectedMessage = handler.obtainMessage(MESSAGE_CONNECTED, mmSocket.remoteDevice.name)
+            isConnectedMessage.sendToTarget()
+
             // Keep listening to the InputStream until an exception occurs.
             while (true) {
                 // Read from the InputStream.
@@ -89,6 +94,9 @@ class BluetoothService( private val handler: Handler) {
                 readMsg.sendToTarget()
 
             }
+
+            val isDisconnectedMessage = handler.obtainMessage(MESSAGE_DISCONNECTED)
+            isDisconnectedMessage.sendToTarget()
         }
 
         // Call this method from the main activity to shut down the connection.
