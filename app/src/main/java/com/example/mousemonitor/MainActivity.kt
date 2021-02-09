@@ -14,11 +14,11 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import com.example.mousemonitor.Constants.MESSAGE_CONNECTED
 import com.example.mousemonitor.Constants.MESSAGE_DISCONNECTED
 import com.example.mousemonitor.Constants.MESSAGE_READ
 import com.example.mousemonitor.databinding.ActivityMainBinding
+import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -29,8 +29,9 @@ class MainActivity : AppCompatActivity() {
     var bluetoothAdapter: BluetoothAdapter? = null
     var bluetoothService: BluetoothService? = null
     private lateinit var binding: ActivityMainBinding
-    private var numDatapoints: Int = 0
-    private var dataBuf: String = ""
+    private lateinit var data: LineData
+    private var dataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "Piezo readings")
+    private var t: Float = 0.0f
 
     companion object {
         private const val PERMISSION_CODE = 1
@@ -118,13 +119,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showOnScreen(readMessage: String) {
-        if (numDatapoints > 100) {
-            drawGraph(floatListFromString(dataBuf), 2.0f)
-            dataBuf = ""
-            numDatapoints = 0
-        }
-        dataBuf = "${dataBuf}$readMessage"
-        numDatapoints++
+        addPointsToGraph(floatListFromString(readMessage))
     }
 
 
@@ -188,35 +183,44 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupGraph() {
         with(binding.chartView) {
-            axisLeft.isEnabled = false
+            setBackgroundColor(Color.WHITE)
+            axisLeft.isEnabled = true
             axisRight.isEnabled = false
-            xAxis.isEnabled = false
+            xAxis.isEnabled = true
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.setDrawLabels(false)
             legend.isEnabled = false
             description.isEnabled = false
-            setTouchEnabled(true)
-            isDragEnabled = true
-            setScaleEnabled(false)
-            setPinchZoom(false)
+            axisLeft.setDrawGridLines(false)
+            xAxis.setDrawGridLines(false)
+            axisLeft.axisMaximum = 500f
+            axisLeft.axisMinimum = 0f
+            axisLeft.setDrawZeroLine(true)
         }
-    }
-
-    private fun drawGraph(data: List<Float>, period: Float) {
-        // TO DO: Real time plotting (add one value at a time)
-        // TO DO: Improve graph appearance
-        val dataPoints = data.mapIndexed { i, dataPoint ->
-            Entry(i*period, dataPoint)
-        }
-        val dataSet = LineDataSet(dataPoints, "Piezo readings")
         with(dataSet) {
             color = Color.BLUE
-            valueTextColor = Color.BLUE
-            highLightColor = Color.RED
+            lineWidth = 2f
+            setDrawCircles(false)
             setDrawValues(false)
-            lineWidth = 1.5f
-            isHighlightEnabled = true
-            setDrawHighlightIndicators(false)
+
         }
-        binding.chartView.data = LineData(dataSet)
+        data = LineData(dataSet)
+        binding.chartView.data = data
+    }
+
+    private fun addPointsToGraph(points: List<Float>) {
+        val dataPoints = points.map { dataPoint ->
+            t += 2.0f
+            Entry(t, dataPoint)
+        }
+        dataPoints.forEach {
+            dataSet.addEntry(it)
+        }
+        while (dataSet.values.size > 50) {
+            dataSet.removeFirst()
+        }
+        data.notifyDataChanged()
+        binding.chartView.notifyDataSetChanged()
         binding.chartView.invalidate()
     }
 
