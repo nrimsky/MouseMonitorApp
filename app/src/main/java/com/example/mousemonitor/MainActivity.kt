@@ -11,6 +11,7 @@ import android.os.*
 import android.util.Log
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.NumberPicker
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -24,7 +25,7 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
 
     var bluetoothAdapter: BluetoothAdapter? = null
     var bluetoothService: BluetoothService? = null
@@ -32,6 +33,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var data: LineData
     private var dataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "Piezo readings")
     private var t: Float = 0.0f
+    private var maSize: Int = 1
+    private var maBuf: MutableList<Float> = mutableListOf()
 
     companion object {
         private const val PERMISSION_CODE = 1
@@ -46,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
         setupGraph()
+        setupMovingAverage()
 
         checkBluetoothPermissions()
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -101,8 +105,6 @@ class MainActivity : AppCompatActivity() {
                     val readBuf = msg.obj as ByteArray
                     // construct a string from the valid bytes in the buffer
                     val readMessage = String(readBuf, 0, msg.arg1)
-                    // print to console
-                    Log.d(TAG, readMessage)
                     // show in app
                     showOnScreen(readMessage)
                 }
@@ -119,7 +121,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showOnScreen(readMessage: String) {
-        addPointsToGraph(floatListFromString(readMessage))
+        if (maSize == 1) {
+            addPointsToGraph(floatListFromString(readMessage))
+        } else {
+            val newValues = floatListFromString(readMessage)
+            newValues.forEach {
+                maBuf.add(it)
+                if (maBuf.size > maSize) {
+                    val last = maBuf.takeLast(maSize)
+                    addPointToGraph(last.average().toFloat())
+                    maBuf = last.toMutableList()
+                }
+            }
+        }
+
     }
 
 
@@ -193,7 +208,7 @@ class MainActivity : AppCompatActivity() {
             description.isEnabled = false
             axisLeft.setDrawGridLines(false)
             xAxis.setDrawGridLines(false)
-            axisLeft.axisMaximum = 500f
+            axisLeft.axisMaximum = 250f
             axisLeft.axisMinimum = 0f
             axisLeft.setDrawZeroLine(true)
         }
@@ -216,12 +231,41 @@ class MainActivity : AppCompatActivity() {
         dataPoints.forEach {
             dataSet.addEntry(it)
         }
-        while (dataSet.values.size > 50) {
+        while (dataSet.values.size > 100) {
             dataSet.removeFirst()
         }
         data.notifyDataChanged()
         binding.chartView.notifyDataSetChanged()
         binding.chartView.invalidate()
     }
+
+    private fun addPointToGraph(point: Float) {
+        t += 2.0f
+        val dataPoint = Entry(t, point)
+        dataSet.addEntry(dataPoint)
+        while (dataSet.values.size > 100) {
+            dataSet.removeFirst()
+        }
+        data.notifyDataChanged()
+        binding.chartView.notifyDataSetChanged()
+        binding.chartView.invalidate()
+    }
+
+    // Moving average
+
+    private fun setupMovingAverage() {
+        with ( binding.movingAverageSizePicker) {
+            maxValue = 50
+            minValue = 1
+            value = 1
+        }
+        binding.movingAverageSizePicker.setOnValueChangedListener(this)
+    }
+
+    override fun onValueChange(picker: NumberPicker?, oldVal: Int, newVal: Int) {
+        maSize = newVal
+        Log.d(TAG, maSize.toString())
+    }
+
 
 }

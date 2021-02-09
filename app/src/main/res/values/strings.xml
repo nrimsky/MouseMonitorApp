@@ -4,4 +4,5 @@
     <string name="incoming_data">Incoming data</string>
     <string name="no_data_so_far">No data so far</string>
     <string name="no_available_bluetooth_devices_please_try_connecting_to_the_arduino_in_settings">No available bluetooth devices - please try connecting to the Arduino in settings</string>
+    <string name="moving_average_size">Moving average size (# samples)</string>
 </resources>

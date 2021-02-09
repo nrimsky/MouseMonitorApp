@@ -51,6 +51,19 @@
                 android:id="@+id/chartView"
                 android:layout_width="match_parent"
                 android:layout_height="300dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/moving_average_size"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <NumberPicker
+                android:id="@+id/moving_average_size_picker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
         </LinearLayout>
 
 
