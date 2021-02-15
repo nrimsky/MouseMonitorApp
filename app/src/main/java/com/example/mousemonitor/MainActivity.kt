@@ -23,6 +23,7 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.paramsen.noise.Noise
 
 
 class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
@@ -30,11 +31,22 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
     var bluetoothAdapter: BluetoothAdapter? = null
     var bluetoothService: BluetoothService? = null
     private lateinit var binding: ActivityMainBinding
+
     private lateinit var data: LineData
     private var dataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "Piezo readings")
+
+    private lateinit var fftData: LineData
+    private var fftDataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "FFT")
+
     private var t: Float = 0.0f
     private var maSize: Int = 1
     private var maBuf: MutableList<Float> = mutableListOf()
+
+    private val fftLen: Int = 4096;
+    private val fftCalculator = Noise.real(fftLen)
+    private val fftSrc = FloatArray(fftLen)
+    private val fftDst = FloatArray(fftLen + 2)
+    private var fftIndex: Int = 0
 
     companion object {
         private const val PERMISSION_CODE = 1
@@ -49,6 +61,7 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
         val view = binding.root
         setContentView(view)
         setupGraph()
+        setupFFTGraph()
         setupMovingAverage()
 
         checkBluetoothPermissions()
@@ -105,8 +118,7 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
                     val readBuf = msg.obj as ByteArray
                     // construct a string from the valid bytes in the buffer
                     val readMessage = String(readBuf, 0, msg.arg1)
-                    // show in app
-                    showOnScreen(readMessage)
+                    processData(readMessage)
                 }
                 MESSAGE_CONNECTED -> {
                     val deviceName = msg.obj as String
@@ -120,13 +132,18 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
         }
     }
 
-    private fun showOnScreen(readMessage: String) {
+    private fun processData(readMessage: String) {
+        val values = floatListFromString(readMessage)
+
+        // Add values to FFT buffer
+        values.forEach { appendToFFT(it) }
+
         if (maSize == 1) {
-            addPointsToGraph(floatListFromString(readMessage))
+            addPointsToGraph(values)
         } else {
-            val newValues = floatListFromString(readMessage)
-            newValues.forEach {
+            values.forEach {
                 maBuf.add(it)
+                // Need to check this condition as moving average size can be increased on the fly
                 if (maBuf.size > maSize) {
                     val last = maBuf.takeLast(maSize)
                     addPointToGraph(last.average().toFloat())
@@ -135,8 +152,8 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
             }
         }
 
-    }
 
+    }
 
     private fun floatListFromString(str: String): List<Float> {
         return str
@@ -144,6 +161,8 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
                 .filter { it != "" }
                 .map { it.toFloat() }
     }
+
+    // Bluetooth
 
     private fun setupBluetoothService() {
         bluetoothService = BluetoothService(mHandler)
@@ -194,7 +213,64 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
         binding.linearLayout.addView(button)
     }
 
-    // Graph
+    // FFT
+
+    private fun appendToFFT(value: Float) {
+        if (fftIndex < fftLen) {
+            fftSrc[fftIndex] = value
+            fftIndex++
+        } else {
+            val fft = fftCalculator.fft(fftSrc, fftDst)
+            showFFTOnScreen(fft)
+            fftIndex = 0
+        }
+    }
+
+    private fun showFFTOnScreen(fft: FloatArray) {
+
+        fftDataSet.clear()
+
+        for (i in 0 until fft.size / 2) {
+            // Add real values of fft to graph data
+            val real: Float = fft[i * 2]
+            fftDataSet.addEntry(Entry(i.toFloat(), real))
+        }
+
+        fftData.notifyDataChanged()
+        binding.fftChart.notifyDataSetChanged()
+        binding.fftChart.invalidate()
+
+    }
+
+    private fun setupFFTGraph() {
+
+        with(binding.fftChart) {
+            setBackgroundColor(Color.WHITE)
+            axisLeft.isEnabled = true
+            axisRight.isEnabled = false
+            xAxis.isEnabled = true
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.setDrawLabels(false)
+            legend.isEnabled = false
+            description.isEnabled = false
+            axisLeft.setDrawGridLines(false)
+            xAxis.setDrawGridLines(false)
+//            axisLeft.axisMaximum = 250f
+//            axisLeft.axisMinimum = 0f
+            axisLeft.setDrawZeroLine(true)
+        }
+        with(fftDataSet) {
+            color = Color.BLUE
+            lineWidth = 2f
+            setDrawCircles(false)
+            setDrawValues(false)
+        }
+        fftData = LineData(fftDataSet)
+        binding.fftChart.data = fftData
+
+    }
+
+    // Main Graph
 
     private fun setupGraph() {
         with(binding.chartView) {
@@ -254,7 +330,7 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
     // Moving average
 
     private fun setupMovingAverage() {
-        with ( binding.movingAverageSizePicker) {
+        with(binding.movingAverageSizePicker) {
             maxValue = 50
             minValue = 1
             value = 1

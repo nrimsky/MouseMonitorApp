@@ -64,6 +64,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/fft"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/fftChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp" />
+
         </LinearLayout>
 
 
