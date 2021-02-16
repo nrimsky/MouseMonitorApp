@@ -24,6 +24,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.paramsen.noise.Noise
+import kotlin.math.absoluteValue
 
 
 class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
@@ -36,17 +37,18 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
     private var dataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "Piezo readings")
 
     private lateinit var fftData: LineData
-    private var fftDataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "FFT")
+    private var fftDataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "FFT (Beats per Minute)")
 
     private var t: Float = 0.0f
     private var maSize: Int = 1
     private var maBuf: MutableList<Float> = mutableListOf()
 
-    private val fftLen: Int = 4096;
+    private val fftLen: Int = 2048
     private val fftCalculator = Noise.real(fftLen)
     private val fftSrc = FloatArray(fftLen)
     private val fftDst = FloatArray(fftLen + 2)
     private var fftIndex: Int = 0
+    private val arduinoSamplingFrequency: Float = 100f
 
     companion object {
         private const val PERMISSION_CODE = 1
@@ -228,12 +230,16 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
 
     private fun showFFTOnScreen(fft: FloatArray) {
 
+        val frequencyResolution: Float = arduinoSamplingFrequency/fftLen
+
+        Log.d(TAG,frequencyResolution.toString())
+
         fftDataSet.clear()
 
         for (i in 0 until fft.size / 2) {
             // Add real values of fft to graph data
-            val real: Float = fft[i * 2]
-            fftDataSet.addEntry(Entry(i.toFloat(), real))
+            val real: Float = fft[i * 2].absoluteValue
+            fftDataSet.addEntry(Entry(i.toFloat()*frequencyResolution*60, real))
         }
 
         fftData.notifyDataChanged()
@@ -250,14 +256,14 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
             axisRight.isEnabled = false
             xAxis.isEnabled = true
             xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.setDrawLabels(false)
+            xAxis.setDrawLabels(true)
             legend.isEnabled = false
             description.isEnabled = false
             axisLeft.setDrawGridLines(false)
-            xAxis.setDrawGridLines(false)
-//            axisLeft.axisMaximum = 250f
-//            axisLeft.axisMinimum = 0f
+            xAxis.setDrawGridLines(true)
             axisLeft.setDrawZeroLine(true)
+            xAxis.axisMaximum = 150f
+            xAxis.axisMinimum = 0f
         }
         with(fftDataSet) {
             color = Color.BLUE
