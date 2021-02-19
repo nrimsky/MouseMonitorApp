@@ -23,7 +23,6 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
-import com.paramsen.noise.Noise
 import kotlin.math.absoluteValue
 
 
@@ -39,16 +38,14 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
     private lateinit var fftData: LineData
     private var fftDataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "FFT (Beats per Minute)")
 
-    private var t: Float = 0.0f
-    private var maSize: Int = 1
-    private var maBuf: MutableList<Float> = mutableListOf()
+    private var samplingFrequency = 100f
+    private var t = 0
 
-    private val fftLen: Int = 2048
-    private val fftCalculator = Noise.real(fftLen)
-    private val fftSrc = FloatArray(fftLen)
-    private val fftDst = FloatArray(fftLen + 2)
-    private var fftIndex: Int = 0
-    private val arduinoSamplingFrequency: Float = 100f
+    private var fftLen = 2048
+    private var maSize = 1
+
+    private var fftManager = FFTManager(fftLen)
+    private var maManager = MAFilterManager(maSize)
 
     companion object {
         private const val PERMISSION_CODE = 1
@@ -135,33 +132,9 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
     }
 
     private fun processData(readMessage: String) {
-        val values = floatListFromString(readMessage)
-
-        // Add values to FFT buffer
-        values.forEach { appendToFFT(it) }
-
-        if (maSize == 1) {
-            addPointsToGraph(values)
-        } else {
-            values.forEach {
-                maBuf.add(it)
-                // Need to check this condition as moving average size can be increased on the fly
-                if (maBuf.size > maSize) {
-                    val last = maBuf.takeLast(maSize)
-                    addPointToGraph(last.average().toFloat())
-                    maBuf = last.toMutableList()
-                }
-            }
-        }
-
-
-    }
-
-    private fun floatListFromString(str: String): List<Float> {
-        return str
-                .split(",")
-                .filter { it != "" }
-                .map { it.toFloat() }
+        val readings = floatListFromString(readMessage)
+        showFFTOnScreen(fftManager.nextValues(readings))
+        addPointsToGraph(maManager.nextValues(readings))
     }
 
     // Bluetooth
@@ -185,7 +158,6 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
             }
         }
     }
-
 
     private fun queryPairedDevices() {
         val pairedDevices: Set<BluetoothDevice>? =bluetoothAdapter?.bondedDevices
@@ -217,39 +189,20 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
 
     // FFT
 
-    private fun appendToFFT(value: Float) {
-        if (fftIndex < fftLen) {
-            fftSrc[fftIndex] = value
-            fftIndex++
-        } else {
-            val fft = fftCalculator.fft(fftSrc, fftDst)
-            showFFTOnScreen(fft)
-            fftIndex = 0
-        }
-    }
-
     private fun showFFTOnScreen(fft: FloatArray) {
-
-        val frequencyResolution: Float = arduinoSamplingFrequency/fftLen
-
-        Log.d(TAG,frequencyResolution.toString())
-
+        val frequencyResolution: Float = samplingFrequency/fftLen
         fftDataSet.clear()
-
         for (i in 0 until fft.size / 2) {
             // Add real values of fft to graph data
             val real: Float = fft[i * 2].absoluteValue
             fftDataSet.addEntry(Entry(i.toFloat()*frequencyResolution*60, real))
         }
-
         fftData.notifyDataChanged()
         binding.fftChart.notifyDataSetChanged()
         binding.fftChart.invalidate()
-
     }
 
     private fun setupFFTGraph() {
-
         with(binding.fftChart) {
             setBackgroundColor(Color.WHITE)
             axisLeft.isEnabled = true
@@ -273,7 +226,6 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
         }
         fftData = LineData(fftDataSet)
         binding.fftChart.data = fftData
-
     }
 
     // Main Graph
@@ -307,14 +259,14 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
 
     private fun addPointsToGraph(points: List<Float>) {
         val dataPoints = points.map { dataPoint ->
-            t += 2.0f
-            Entry(t, dataPoint)
+            t += 1
+            Entry(t.toFloat(), dataPoint)
         }
         dataPoints.forEach {
             dataSet.addEntry(it)
-        }
-        while (dataSet.values.size > 100) {
-            dataSet.removeFirst()
+            if (dataSet.values.size > 100) {
+                dataSet.removeFirst()
+            }
         }
         data.notifyDataChanged()
         binding.chartView.notifyDataSetChanged()
@@ -322,10 +274,10 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
     }
 
     private fun addPointToGraph(point: Float) {
-        t += 2.0f
-        val dataPoint = Entry(t, point)
+        t += 1
+        val dataPoint = Entry(t.toFloat(), point)
         dataSet.addEntry(dataPoint)
-        while (dataSet.values.size > 100) {
+        if (dataSet.values.size > 100) {
             dataSet.removeFirst()
         }
         data.notifyDataChanged()
@@ -346,6 +298,7 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
 
     override fun onValueChange(picker: NumberPicker?, oldVal: Int, newVal: Int) {
         maSize = newVal
+        maManager = MAFilterManager(maSize)
         Log.d(TAG, maSize.toString())
     }
 
