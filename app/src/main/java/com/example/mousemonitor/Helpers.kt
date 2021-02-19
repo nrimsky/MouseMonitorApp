@@ -1,5 +1,6 @@
 package com.example.mousemonitor
 
+// TODO: Allow user to pick the delimiter
 fun floatListFromString(str: String): List<Float> {
     return str
         .split(",")
