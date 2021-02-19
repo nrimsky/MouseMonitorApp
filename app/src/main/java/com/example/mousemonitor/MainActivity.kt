@@ -8,13 +8,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.*
-import android.util.Log
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.NumberPicker
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import com.example.mousemonitor.Constants.MESSAGE_CONNECTED
 import com.example.mousemonitor.Constants.MESSAGE_DISCONNECTED
 import com.example.mousemonitor.Constants.MESSAGE_READ
@@ -23,10 +23,12 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import java.lang.Exception
 import kotlin.math.absoluteValue
+import kotlin.math.pow
 
 
-class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
+class MainActivity : AppCompatActivity() {
 
     var bluetoothAdapter: BluetoothAdapter? = null
     var bluetoothService: BluetoothService? = null
@@ -37,20 +39,22 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
 
     private lateinit var fftData: LineData
     private var fftDataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "FFT (Beats per Minute)")
-
-    private var samplingFrequency = 100f
     private var t = 0
 
-    private var fftLen = 2048
-    private var maSize = 1
-
-    private var fftManager = FFTManager(fftLen)
-    private var maManager = MAFilterManager(maSize)
+    // Initialise with default start values
+    private var fftManager = FFTManager(DEFAULT_FFT_LEN)
+    private var fftSize: Int = DEFAULT_FFT_LEN
+    private var maManager = MAFilterManager(DEFAULT_MA_SIZE)
+    private var samplingFrequency = DEFAULT_SAMPLING_FREQUENCY
 
     companion object {
         private const val PERMISSION_CODE = 1
         private const val REQUEST_ENABLE_BT = 2
         private const val TAG = "MainActivity"
+        private const val DEFAULT_SAMPLING_FREQUENCY = 100f
+        private const val DEFAULT_MA_SIZE = 1
+        private const val DEFAULT_FFT_LEN = 2048
+        private val FFT_LEN_OPTIONS = arrayOf(7,8,9,10,11,12).map { 2f.pow(it).toString() }.toTypedArray()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,7 +65,9 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
         setContentView(view)
         setupGraph()
         setupFFTGraph()
+        setupSamplingFrequencyInput()
         setupMovingAverage()
+        setupFFTSizePicker()
 
         checkBluetoothPermissions()
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -190,7 +196,7 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
     // FFT
 
     private fun showFFTOnScreen(fft: FloatArray) {
-        val frequencyResolution: Float = samplingFrequency/fftLen
+        val frequencyResolution: Float = samplingFrequency/fftSize
         fftDataSet.clear()
         for (i in 0 until fft.size / 2) {
             // Add real values of fft to graph data
@@ -285,21 +291,70 @@ class MainActivity : AppCompatActivity(), NumberPicker.OnValueChangeListener {
         binding.chartView.invalidate()
     }
 
-    // Moving average
+    // Moving average picker
 
     private fun setupMovingAverage() {
         with(binding.movingAverageSizePicker) {
             maxValue = 50
             minValue = 1
-            value = 1
+            value = DEFAULT_MA_SIZE
         }
-        binding.movingAverageSizePicker.setOnValueChangedListener(this)
+        binding.movingAverageSizePicker.setOnValueChangedListener { _, _, newVal ->
+            maManager = MAFilterManager(newVal)
+        }
     }
 
-    override fun onValueChange(picker: NumberPicker?, oldVal: Int, newVal: Int) {
-        maSize = newVal
-        maManager = MAFilterManager(maSize)
-        Log.d(TAG, maSize.toString())
+    // FFT Size picker
+
+    private fun setupFFTSizePicker() {
+        with(binding.fftSizePicker) {
+            maxValue = FFT_LEN_OPTIONS.size - 1
+            minValue = 0
+            displayedValues = FFT_LEN_OPTIONS
+            value = 4
+        }
+        binding.fftSizePicker.setOnValueChangedListener { _, _, newVal ->
+            fftSize = 2f.pow(newVal + 7).toInt()
+            fftManager = FFTManager(fftSize)
+        }
+    }
+
+    // Sampling frequency input
+
+    // TODO: Change this logic - it doesn't work with floats - change to int
+
+    private fun setupSamplingFrequencyInput() {
+        val editText = binding.samplingFreqInput
+        modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
+        editText.doAfterTextChanged {
+            if (it.isNullOrBlank()) {
+                modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
+                return@doAfterTextChanged
+            }
+            val originalText = it.toString()
+            try {
+                val numberText = originalText.toFloat().toString()
+                if (originalText != numberText) {
+                    modifyText(numberText)
+                }
+            } catch (e: Exception) {
+                modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
+            }
+        }
+        editText.setOnEditorActionListener { v, actionId, _ ->
+            var handled = false
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                samplingFrequency = v.text.toString().toFloatOrNull() ?: 100f
+                modifyText(samplingFrequency.toString())
+                handled = true
+            }
+            return@setOnEditorActionListener handled
+        }
+    }
+
+    private fun modifyText(numberText: String) {
+        binding.samplingFreqInput.setText(numberText)
+        binding.samplingFreqInput.setSelection(numberText.length)
     }
 
 

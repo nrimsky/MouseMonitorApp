@@ -76,6 +76,34 @@
                 android:layout_width="match_parent"
                 android:layout_height="300dp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/fft_size"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <NumberPicker
+                android:id="@+id/fft_size_picker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:labelFor="@id/sampling_freq_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sampling_frequency_of_arduino"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/sampling_freq_input"
+                android:text="@string/DEFAULT_SAMPLING_FREQUENCY"
+                android:autofillHints="Sampling frequency in Hz"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+
         </LinearLayout>
 
 
