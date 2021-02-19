@@ -2,13 +2,15 @@ package com.example.mousemonitor
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.*
-import android.view.inputmethod.EditorInfo
+import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
@@ -23,7 +25,6 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
-import java.lang.Exception
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 
@@ -38,7 +39,10 @@ class MainActivity : AppCompatActivity() {
     private var dataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "Piezo readings")
 
     private lateinit var fftData: LineData
-    private var fftDataSet: LineDataSet = LineDataSet(mutableListOf<Entry>(), "FFT (Beats per Minute)")
+    private var fftDataSet: LineDataSet = LineDataSet(
+        mutableListOf<Entry>(),
+        "FFT (Beats per Minute)"
+    )
     private var t = 0
 
     // Initialise with default start values
@@ -51,10 +55,10 @@ class MainActivity : AppCompatActivity() {
         private const val PERMISSION_CODE = 1
         private const val REQUEST_ENABLE_BT = 2
         private const val TAG = "MainActivity"
-        private const val DEFAULT_SAMPLING_FREQUENCY = 100f
+        private const val DEFAULT_SAMPLING_FREQUENCY = 100
         private const val DEFAULT_MA_SIZE = 1
         private const val DEFAULT_FFT_LEN = 2048
-        private val FFT_LEN_OPTIONS = arrayOf(7,8,9,10,11,12).map { 2f.pow(it).toString() }.toTypedArray()
+        private val FFT_LEN_OPTIONS = arrayOf(7, 8, 9, 10, 11, 12).map { 2f.pow(it).toString() }.toTypedArray()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -196,12 +200,12 @@ class MainActivity : AppCompatActivity() {
     // FFT
 
     private fun showFFTOnScreen(fft: FloatArray) {
-        val frequencyResolution: Float = samplingFrequency/fftSize
+        val frequencyResolution = samplingFrequency.toFloat()/fftSize.toFloat()
         fftDataSet.clear()
         for (i in 0 until fft.size / 2) {
             // Add real values of fft to graph data
             val real: Float = fft[i * 2].absoluteValue
-            fftDataSet.addEntry(Entry(i.toFloat()*frequencyResolution*60, real))
+            fftDataSet.addEntry(Entry(i * frequencyResolution * 60, real))
         }
         fftData.notifyDataChanged()
         binding.fftChart.notifyDataSetChanged()
@@ -300,6 +304,7 @@ class MainActivity : AppCompatActivity() {
             value = DEFAULT_MA_SIZE
         }
         binding.movingAverageSizePicker.setOnValueChangedListener { _, _, newVal ->
+            Log.d(TAG, "Moving average filter size changed to $newVal")
             maManager = MAFilterManager(newVal)
         }
     }
@@ -315,40 +320,49 @@ class MainActivity : AppCompatActivity() {
         }
         binding.fftSizePicker.setOnValueChangedListener { _, _, newVal ->
             fftSize = 2f.pow(newVal + 7).toInt()
+            Log.d(TAG, "FFT size changed to $fftSize")
             fftManager = FFTManager(fftSize)
         }
     }
 
     // Sampling frequency input
 
-    // TODO: Change this logic - it doesn't work with floats - change to int
-
     private fun setupSamplingFrequencyInput() {
         val editText = binding.samplingFreqInput
-        modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
+        binding.samplingFreqInput.setText(DEFAULT_SAMPLING_FREQUENCY.toString())
         editText.doAfterTextChanged {
-            if (it.isNullOrBlank()) {
-                modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
-                return@doAfterTextChanged
-            }
-            val originalText = it.toString()
-            try {
-                val numberText = originalText.toFloat().toString()
-                if (originalText != numberText) {
-                    modifyText(numberText)
+            if (!it.isNullOrBlank()) {
+                val originalText = it.toString()
+                try {
+                    val numberText = originalText.toInt().toString()
+                    if (originalText != numberText) {
+                        modifyText(numberText)
+                    }
+                } catch (e: Exception) {
+                    modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
                 }
-            } catch (e: Exception) {
-                modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
             }
         }
-        editText.setOnEditorActionListener { v, actionId, _ ->
+        editText.setOnEditorActionListener { _, _, _ ->
             var handled = false
-            if (actionId == EditorInfo.IME_ACTION_GO) {
-                samplingFrequency = v.text.toString().toFloatOrNull() ?: 100f
-                modifyText(samplingFrequency.toString())
+            binding.samplingFreqInput.text.toString().toIntOrNull()?.let {
+                samplingFrequency = it
+                Log.d(TAG, "Sampling frequency changed to $samplingFrequency")
+                hideKeyboard()
                 handled = true
+            }?:run{
+                binding.samplingFreqInput.setText(DEFAULT_SAMPLING_FREQUENCY.toString())
+                hideKeyboard()
             }
             return@setOnEditorActionListener handled
+        }
+    }
+
+    fun hideKeyboard() {
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+        //Find the currently focused view, so we can grab the correct window token from it.
+        currentFocus?.let {
+            imm?.hideSoftInputFromWindow(it.windowToken, 0)
         }
     }
 
