@@ -1,8 +1,7 @@
-package com.example.mousemonitor
+package com.example.mousemonitor.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
@@ -12,15 +11,23 @@ import android.os.*
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
-import com.example.mousemonitor.Constants.MESSAGE_CONNECTED
-import com.example.mousemonitor.Constants.MESSAGE_DISCONNECTED
-import com.example.mousemonitor.Constants.MESSAGE_READ
+import com.example.mousemonitor.R
+import com.example.mousemonitor.service.BluetoothService
+import com.example.mousemonitor.helpers.Constants.MESSAGE_CONNECTED
+import com.example.mousemonitor.helpers.Constants.MESSAGE_DISCONNECTED
+import com.example.mousemonitor.helpers.Constants.MESSAGE_READ
+import com.example.mousemonitor.dataprocessing.FFTManager
+import com.example.mousemonitor.dataprocessing.MAFilterManager
 import com.example.mousemonitor.databinding.ActivityMainBinding
+import com.example.mousemonitor.dataprocessing.ThresholdManager
+import com.example.mousemonitor.floatListFromString
+import com.example.mousemonitor.helpers.setupNumberTextField
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
@@ -49,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private var fftManager = FFTManager(DEFAULT_FFT_LEN)
     private var fftSize: Int = DEFAULT_FFT_LEN
     private var maManager = MAFilterManager(DEFAULT_MA_SIZE)
+    private var thresholdManager = ThresholdManager(DEFAULT_LOWER_THRESHOLD, DEFAULT_UPPER_THRESHOLD)
     private var samplingFrequency = DEFAULT_SAMPLING_FREQUENCY
 
     companion object {
@@ -58,6 +66,8 @@ class MainActivity : AppCompatActivity() {
         private const val DEFAULT_SAMPLING_FREQUENCY = 100
         private const val DEFAULT_MA_SIZE = 1
         private const val DEFAULT_FFT_LEN = 2048
+        private const val DEFAULT_LOWER_THRESHOLD = 40f
+        private const val DEFAULT_UPPER_THRESHOLD = 70f
         private val FFT_LEN_OPTIONS = arrayOf(7, 8, 9, 10, 11, 12).map { 2f.pow(it).toString() }.toTypedArray()
     }
 
@@ -72,6 +82,7 @@ class MainActivity : AppCompatActivity() {
         setupSamplingFrequencyInput()
         setupMovingAverage()
         setupFFTSizePicker()
+        setupThresholdChoosers()
 
         checkBluetoothPermissions()
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -141,8 +152,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun processData(readMessage: String) {
         val readings = floatListFromString(readMessage)
+        val breathingRate = fftManager.maxFreq(samplingFrequency)
+        val mouseState = thresholdManager.getState(breathingRate)
+        binding.mainBpmDisplay.text = "$breathingRate BPM"
+        binding.mainBpmDisplay.setBackgroundColor(getColor(mouseState))
         showFFTOnScreen(fftManager.nextValues(readings))
         addPointsToGraph(maManager.nextValues(readings))
     }
@@ -226,7 +242,7 @@ class MainActivity : AppCompatActivity() {
             xAxis.setDrawGridLines(true)
             axisLeft.setDrawZeroLine(true)
             xAxis.axisMaximum = 150f
-            xAxis.axisMinimum = 0f
+            xAxis.axisMinimum = 10f
         }
         with(fftDataSet) {
             color = Color.BLUE
@@ -328,22 +344,8 @@ class MainActivity : AppCompatActivity() {
     // Sampling frequency input
 
     private fun setupSamplingFrequencyInput() {
-        val editText = binding.samplingFreqInput
-        binding.samplingFreqInput.setText(DEFAULT_SAMPLING_FREQUENCY.toString())
-        editText.doAfterTextChanged {
-            if (!it.isNullOrBlank()) {
-                val originalText = it.toString()
-                try {
-                    val numberText = originalText.toInt().toString()
-                    if (originalText != numberText) {
-                        modifyText(numberText)
-                    }
-                } catch (e: Exception) {
-                    modifyText(DEFAULT_SAMPLING_FREQUENCY.toString())
-                }
-            }
-        }
-        editText.setOnEditorActionListener { _, _, _ ->
+        setupNumberTextField(binding.samplingFreqInput, DEFAULT_SAMPLING_FREQUENCY.toString())
+        binding.samplingFreqInput.setOnEditorActionListener { _, _, _ ->
             var handled = false
             binding.samplingFreqInput.text.toString().toIntOrNull()?.let {
                 samplingFrequency = it
@@ -366,10 +368,61 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun modifyText(numberText: String) {
-        binding.samplingFreqInput.setText(numberText)
-        binding.samplingFreqInput.setSelection(numberText.length)
+
+
+    // Threshold choosers
+
+    private fun setupThresholdChoosers() {
+        val lowerInput = binding.lowerThreshold
+        val upperInput = binding.upperThreshold
+        val lowerDefault = DEFAULT_LOWER_THRESHOLD.toInt().toString()
+        val upperDefault = DEFAULT_UPPER_THRESHOLD.toInt().toString()
+
+        setupNumberTextField(lowerInput, lowerDefault)
+        setupNumberTextField(upperInput, upperDefault)
+
+        lowerInput.setOnEditorActionListener { _, _, _ ->
+            var handled = false
+            lowerInput.text.toString().toFloatOrNull()?.let { newLower ->
+                thresholdManager = ThresholdManager(newLower, thresholdManager.upperThreshold)
+                hideKeyboard()
+                handled = true
+            } ?: run {
+                lowerInput.setText(lowerDefault)
+                hideKeyboard()
+            }
+            return@setOnEditorActionListener handled
+        }
+
+        upperInput.setOnEditorActionListener { _, _, _ ->
+            var handled = false
+            upperInput.text.toString().toFloatOrNull()?.let { newUpper ->
+                thresholdManager = ThresholdManager(thresholdManager.lowerThreshold, newUpper)
+                hideKeyboard()
+                handled = true
+            } ?: run {
+                upperInput.setText(upperDefault)
+                hideKeyboard()
+            }
+            return@setOnEditorActionListener handled
+        }
     }
+
+    private fun getColor(mouseState: ThresholdManager.STATE): Int {
+        return when (mouseState) {
+            ThresholdManager.STATE.DANGER -> {
+                ContextCompat.getColor(this, R.color.danger_red)
+            }
+            ThresholdManager.STATE.WARNING -> {
+                ContextCompat.getColor(this, R.color.warning_orange)
+            }
+            ThresholdManager.STATE.OK -> {
+                ContextCompat.getColor(this, R.color.ok_blue)
+            }
+        }
+    }
+
+
 
 
 }

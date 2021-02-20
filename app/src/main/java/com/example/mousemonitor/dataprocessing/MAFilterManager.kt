@@ -1,4 +1,4 @@
-package com.example.mousemonitor
+package com.example.mousemonitor.dataprocessing
 
 class MAFilterManager(private var maSize: Int = 1) {
 

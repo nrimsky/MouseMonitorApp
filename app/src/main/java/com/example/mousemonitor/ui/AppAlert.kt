@@ -1,4 +1,4 @@
-package com.example.mousemonitor
+package com.example.mousemonitor.ui
 
 import android.app.AlertDialog
 import android.content.Context

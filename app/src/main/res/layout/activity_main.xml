@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ui.MainActivity">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -17,6 +17,27 @@
             android:orientation="vertical"
             android:padding="20dp"
             android:showDividers="middle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                tools:ignore="UseCompoundDrawables">
+                <ImageView
+                    android:layout_marginRight="10dp"
+                    android:layout_height="35dp"
+                    android:src="@drawable/ic_mouse"
+                    android:layout_width="35dp"
+                    android:contentDescription="@string/image_of_mouse"
+                    tools:ignore="RtlHardcoded" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mousemonitor"
+                    android:textColor="@color/ok_blue"
+                    android:textSize="21sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/available_device_title"
@@ -41,6 +62,151 @@
             </LinearLayout>
 
             <TextView
+                style="@style/BPM_view"
+                android:id="@+id/main_bpm_display"
+                android:layout_width="match_parent"
+                android:text="@string/DEFAULT_START_BPM"
+                android:background="@color/ok_blue"
+                android:layout_height="wrap_content"/>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false">
+                <RelativeLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.33">
+
+                    <TextView
+                        android:id="@+id/lower_threshold_label"
+                        android:labelFor="@id/lower_threshold"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/lower_threshold_bpm"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:layout_below="@id/lower_threshold_label"
+                        android:id="@+id/lower_threshold"
+                        android:text="@string/DEFAULT_LOWER_THRESHOLD"
+                        android:autofillHints="Lower threshold frequency"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal"/>
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.33">
+
+                    <TextView
+                        android:id="@+id/upper_threshold_label"
+                        android:labelFor="@id/upper_threshold"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/upper_threshold_bpm"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:layout_below="@id/upper_threshold_label"
+                        android:id="@+id/upper_threshold"
+                        android:text="@string/DEFAULT_UPPER_THRESHOLD"
+                        android:autofillHints="Upper threshold frequency"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal"/>
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.33">
+
+                    <TextView
+                        android:id="@+id/sampling_freq_input_label"
+                        android:labelFor="@id/sampling_freq_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/sampling_frequency_of_arduino"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:layout_below="@id/sampling_freq_input_label"
+                        android:id="@+id/sampling_freq_input"
+                        android:text="@string/DEFAULT_SAMPLING_FREQUENCY"
+                        android:autofillHints="Sampling frequency in Hz"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal"/>
+
+                </RelativeLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false">
+
+                <RelativeLayout
+                    android:layout_marginRight="5dp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.5"
+                    tools:ignore="RtlHardcoded">
+
+                    <TextView
+                        android:id="@+id/fft_size_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fft_size"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <NumberPicker
+                        android:layout_below="@id/fft_size_title"
+                        android:id="@+id/fft_size_picker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_marginLeft="5dp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.5"
+                    tools:ignore="RtlHardcoded">
+
+                    <TextView
+                        android:id="@+id/ma_size_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/moving_average_size"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <NumberPicker
+                        android:layout_below="@id/ma_size_title"
+                        android:id="@+id/moving_average_size_picker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </RelativeLayout>
+
+            </LinearLayout>
+
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/incoming_data"
@@ -55,18 +221,6 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/moving_average_size"
-                android:textSize="21sp"
-                android:textStyle="bold" />
-
-            <NumberPicker
-                android:id="@+id/moving_average_size_picker"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:text="@string/fft"
                 android:textSize="21sp"
                 android:textStyle="bold" />
@@ -75,34 +229,6 @@
                 android:id="@+id/fftChart"
                 android:layout_width="match_parent"
                 android:layout_height="300dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/fft_size"
-                android:textSize="21sp"
-                android:textStyle="bold" />
-
-            <NumberPicker
-                android:id="@+id/fft_size_picker"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
-            <TextView
-                android:labelFor="@id/sampling_freq_input"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/sampling_frequency_of_arduino"
-                android:textSize="21sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/sampling_freq_input"
-                android:text="@string/DEFAULT_SAMPLING_FREQUENCY"
-                android:autofillHints="Sampling frequency in Hz"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"/>
 
         </LinearLayout>
 

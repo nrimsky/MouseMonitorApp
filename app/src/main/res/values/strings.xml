@@ -8,5 +8,12 @@
     <string name="fft">FFT (Arbitrary units/BPM)</string>
     <string name="fft_size">FFT Size (# samples)</string>
     <string name="sampling_frequency_of_arduino">Sampling frequency of Arduino (Hz)</string>
+    <string name="DEFAULT_LOWER_THRESHOLD">40</string>
+    <string name="DEFAULT_UPPER_THRESHOLD">70</string>
     <string name="DEFAULT_SAMPLING_FREQUENCY">100</string>
+    <string name="lower_threshold_bpm">Lower threshold (BPM)</string>
+    <string name="upper_threshold_bpm">Upper threshold (BPM)</string>
+    <string name="DEFAULT_START_BPM">Not measuring</string>
+    <string name="image_of_mouse">Image of mouse</string>
+    <string name="mousemonitor">MouseMonitor</string>
 </resources>
