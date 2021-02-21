@@ -1,7 +1,7 @@
 package com.example.mousemonitor.dataprocessing
 
 
-class ThresholdManager(val upperThreshold: Float, val lowerThreshold: Float) {
+class ThresholdManager(val lowerThreshold: Float, val upperThreshold: Float) {
 
     private val centre = (lowerThreshold+upperThreshold)/2
     private val deviation = upperThreshold-centre

@@ -154,13 +154,19 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun processData(readMessage: String) {
+
+        // TODO: Improve real time performance (maybe disallow changing sampling rate mid graphing)
+
         val readings = floatListFromString(readMessage)
         val breathingRate = fftManager.maxFreq(samplingFrequency)
+
         val mouseState = thresholdManager.getState(breathingRate)
         binding.mainBpmDisplay.text = "$breathingRate BPM"
         binding.mainBpmDisplay.setBackgroundColor(getColor(mouseState))
+
         showFFTOnScreen(fftManager.nextValues(readings))
         addPointsToGraph(maManager.nextValues(readings))
+
     }
 
     // Bluetooth
@@ -218,10 +224,8 @@ class MainActivity : AppCompatActivity() {
     private fun showFFTOnScreen(fft: FloatArray) {
         val frequencyResolution = samplingFrequency.toFloat()/fftSize.toFloat()
         fftDataSet.clear()
-        for (i in 0 until fft.size / 2) {
-            // Add real values of fft to graph data
-            val real: Float = fft[i * 2].absoluteValue
-            fftDataSet.addEntry(Entry(i * frequencyResolution * 60, real))
+        fft.forEachIndexed { i, fftVal ->
+            fftDataSet.addEntry(Entry(i * frequencyResolution * 60, fftVal))
         }
         fftData.notifyDataChanged()
         binding.fftChart.notifyDataSetChanged()
