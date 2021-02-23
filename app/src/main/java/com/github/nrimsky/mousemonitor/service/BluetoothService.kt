@@ -1,12 +1,12 @@
-package com.example.mousemonitor.service
+package com.github.nrimsky.mousemonitor.service
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.Handler
 import android.util.Log
-import com.example.mousemonitor.helpers.Constants.MESSAGE_CONNECTED
-import com.example.mousemonitor.helpers.Constants.MESSAGE_DISCONNECTED
-import com.example.mousemonitor.helpers.Constants.MESSAGE_READ
+import com.github.nrimsky.mousemonitor.helpers.Constants.MESSAGE_CONNECTED
+import com.github.nrimsky.mousemonitor.helpers.Constants.MESSAGE_DISCONNECTED
+import com.github.nrimsky.mousemonitor.helpers.Constants.MESSAGE_READ
 import java.io.IOException
 import java.io.InputStream
 import java.util.*

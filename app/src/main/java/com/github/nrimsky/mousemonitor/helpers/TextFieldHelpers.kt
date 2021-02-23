@@ -1,4 +1,4 @@
-package com.example.mousemonitor.helpers
+package com.github.nrimsky.mousemonitor.helpers
 
 import android.widget.EditText
 import androidx.core.widget.doAfterTextChanged

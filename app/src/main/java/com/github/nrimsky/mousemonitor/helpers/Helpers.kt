@@ -1,4 +1,4 @@
-package com.example.mousemonitor
+package com.github.nrimsky.mousemonitor
 
 // TODO: Allow user to pick the delimiter
 fun floatListFromString(str: String): List<Float> {

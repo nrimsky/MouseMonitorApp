@@ -1,4 +1,4 @@
-package com.example.mousemonitor.helpers
+package com.github.nrimsky.mousemonitor.helpers
 
 object Constants {
     const val MESSAGE_READ: Int = 0

@@ -1,12 +1,11 @@
-package com.example.mousemonitor.dataprocessing
+package com.github.nrimsky.mousemonitor.dataprocessing
 
 
 class ThresholdManager(val lowerThreshold: Float, val upperThreshold: Float) {
 
-    private val centre = (lowerThreshold+upperThreshold)/2
-    private val deviation = upperThreshold-centre
-    private val warningBelow = centre-(deviation*0.8)
-    private val warningAbove = centre+(deviation*0.8)
+    private val deviation = (upperThreshold - lowerThreshold)/2
+    private val warningBelow = lowerThreshold + deviation*0.2
+    private val warningAbove = upperThreshold - deviation*0.2
 
     enum class STATE {
         OK, WARNING, DANGER

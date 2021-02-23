@@ -1,4 +1,4 @@
-package com.example.mousemonitor.ui
+package com.github.nrimsky.mousemonitor.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -11,28 +11,25 @@ import android.os.*
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
-import android.widget.EditText
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.widget.doAfterTextChanged
-import com.example.mousemonitor.R
-import com.example.mousemonitor.service.BluetoothService
-import com.example.mousemonitor.helpers.Constants.MESSAGE_CONNECTED
-import com.example.mousemonitor.helpers.Constants.MESSAGE_DISCONNECTED
-import com.example.mousemonitor.helpers.Constants.MESSAGE_READ
-import com.example.mousemonitor.dataprocessing.FFTManager
-import com.example.mousemonitor.dataprocessing.MAFilterManager
-import com.example.mousemonitor.databinding.ActivityMainBinding
-import com.example.mousemonitor.dataprocessing.ThresholdManager
-import com.example.mousemonitor.floatListFromString
-import com.example.mousemonitor.helpers.setupNumberTextField
 import com.github.mikephil.charting.components.XAxis
+import com.github.nrimsky.mousemonitor.R
+import com.github.nrimsky.mousemonitor.service.BluetoothService
+import com.github.nrimsky.mousemonitor.helpers.Constants.MESSAGE_CONNECTED
+import com.github.nrimsky.mousemonitor.helpers.Constants.MESSAGE_DISCONNECTED
+import com.github.nrimsky.mousemonitor.helpers.Constants.MESSAGE_READ
+import com.github.nrimsky.mousemonitor.dataprocessing.FFTManager
+import com.github.nrimsky.mousemonitor.dataprocessing.MAFilterManager
+import com.github.nrimsky.mousemonitor.databinding.ActivityMainBinding
+import com.github.nrimsky.mousemonitor.dataprocessing.ThresholdManager
+import com.github.nrimsky.mousemonitor.floatListFromString
+import com.github.nrimsky.mousemonitor.helpers.setupNumberTextField
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
-import kotlin.math.absoluteValue
 import kotlin.math.pow
 
 
@@ -63,12 +60,13 @@ class MainActivity : AppCompatActivity() {
         private const val PERMISSION_CODE = 1
         private const val REQUEST_ENABLE_BT = 2
         private const val TAG = "MainActivity"
-        private const val DEFAULT_SAMPLING_FREQUENCY = 100
+        private const val DEFAULT_SAMPLING_FREQUENCY = 10
         private const val DEFAULT_MA_SIZE = 1
-        private const val DEFAULT_FFT_LEN = 2048
-        private const val DEFAULT_LOWER_THRESHOLD = 40f
-        private const val DEFAULT_UPPER_THRESHOLD = 70f
-        private val FFT_LEN_OPTIONS = arrayOf(7, 8, 9, 10, 11, 12).map { 2f.pow(it).toString() }.toTypedArray()
+        private const val DEFAULT_FFT_LEN = 1024
+        private const val DEFAULT_LOWER_THRESHOLD = 55f
+        private const val DEFAULT_UPPER_THRESHOLD = 65f
+        // 128, 256, 512, 1024, 2056
+        private val FFT_LEN_OPTIONS = arrayOf(7, 8, 9, 10, 11).map { 2f.pow(it).toString() }.toTypedArray()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,19 +152,13 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun processData(readMessage: String) {
-
-        // TODO: Improve real time performance (maybe disallow changing sampling rate mid graphing)
-
         val readings = floatListFromString(readMessage)
+        showFFTOnScreen(fftManager.nextValues(readings))
+        addPointsToGraph(maManager.nextValues(readings))
         val breathingRate = fftManager.maxFreq(samplingFrequency)
-
         val mouseState = thresholdManager.getState(breathingRate)
         binding.mainBpmDisplay.text = "$breathingRate BPM"
         binding.mainBpmDisplay.setBackgroundColor(getColor(mouseState))
-
-        showFFTOnScreen(fftManager.nextValues(readings))
-        addPointsToGraph(maManager.nextValues(readings))
-
     }
 
     // Bluetooth
@@ -319,7 +311,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupMovingAverage() {
         with(binding.movingAverageSizePicker) {
-            maxValue = 50
+            maxValue = 10
             minValue = 1
             value = DEFAULT_MA_SIZE
         }
@@ -336,7 +328,8 @@ class MainActivity : AppCompatActivity() {
             maxValue = FFT_LEN_OPTIONS.size - 1
             minValue = 0
             displayedValues = FFT_LEN_OPTIONS
-            value = 4
+            // Corresponds to 1024 samples
+            value = 3
         }
         binding.fftSizePicker.setOnValueChangedListener { _, _, newVal ->
             fftSize = 2f.pow(newVal + 7).toInt()
