@@ -60,8 +60,11 @@ class MainActivity : AppCompatActivity() {
         private const val PERMISSION_CODE = 1
         private const val REQUEST_ENABLE_BT = 2
         private const val TAG = "MainActivity"
+        // In Hz
         private const val DEFAULT_SAMPLING_FREQUENCY = 10
         private const val DEFAULT_MA_SIZE = 1
+        private const val MA_MAX_SIZE = 10
+        private const val MA_MIN_SIZE = 1
         private const val DEFAULT_FFT_LEN = 1024
         private const val DEFAULT_LOWER_THRESHOLD = 55f
         private const val DEFAULT_UPPER_THRESHOLD = 65f
@@ -311,8 +314,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupMovingAverage() {
         with(binding.movingAverageSizePicker) {
-            maxValue = 10
-            minValue = 1
+            maxValue = MA_MAX_SIZE
+            minValue = MA_MIN_SIZE
             value = DEFAULT_MA_SIZE
         }
         binding.movingAverageSizePicker.setOnValueChangedListener { _, _, newVal ->

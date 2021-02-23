@@ -7,7 +7,7 @@ class FFTManager(private val fftLen: Int) {
 
     companion object {
         // Breathing rates outside this range are probably errors so ignore them
-        const val MINIMUM_REASONABLE_BPM = 20f
+        const val MINIMUM_REASONABLE_BPM = 30f
         const val MAXIMUM_REASONABLE_BPM = 100f
     }
 
@@ -34,8 +34,14 @@ class FFTManager(private val fftLen: Int) {
             fftSrc[fftI] = it
             fftI++
         }
+        // Remove dc offset from window
+        val dcOffset = fftSrc.average().toFloat()
+        val normalised = FloatArray(fftLen)
+        for (i in fftSrc.indices) {
+            normalised[i] = fftSrc[i] - dcOffset
+        }
         // Calculate a new fft which includes the new readings
-        val fft = fftCalculator.fft(fftSrc, fftDst)
+        val fft = fftCalculator.fft(normalised, fftDst)
         for (i in 0 until (fft.size / 2)-1) {
             // Add real values of fft to latestFFT
             val real: Float = fft[i * 2].absoluteValue
@@ -74,6 +80,7 @@ class FFTManager(private val fftLen: Int) {
             brI = 0
         }
         breathingRates[brI] = indexOfMax*frequencyResolutionBPM
+        brI++
 
         return breathingRates.average().toFloat()
     }
