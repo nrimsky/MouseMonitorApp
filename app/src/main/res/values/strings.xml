@@ -16,4 +16,5 @@
     <string name="DEFAULT_START_BPM">Not measuring</string>
     <string name="image_of_mouse">Image of mouse</string>
     <string name="mousemonitor">MouseMonitor</string>
+    <string name="settings">Settings...</string>
 </resources>
