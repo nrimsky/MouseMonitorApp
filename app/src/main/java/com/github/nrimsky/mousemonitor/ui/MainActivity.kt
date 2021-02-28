@@ -240,7 +240,7 @@ class MainActivity : AppCompatActivity() {
             axisLeft.setDrawGridLines(false)
             xAxis.setDrawGridLines(true)
             axisLeft.setDrawZeroLine(true)
-            xAxis.axisMaximum = 150f
+            xAxis.axisMaximum = 100f
             xAxis.axisMinimum = 10f
         }
         with(fftDataSet) {

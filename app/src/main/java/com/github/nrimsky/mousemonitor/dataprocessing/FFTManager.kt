@@ -1,5 +1,6 @@
 package com.github.nrimsky.mousemonitor.dataprocessing
 
+import android.util.Log
 import com.paramsen.noise.Noise
 import kotlin.math.absoluteValue
 
@@ -20,7 +21,7 @@ class FFTManager(private val fftLen: Int) {
     private var fftI = 0
 
     // Used for calculating moving average of breathing rates
-    private var breathingRates = FloatArray(10){0f}
+    private var breathingRates = FloatArray(30){0f}
     // Index into breathingRates array where to place next value
     private var brI = 0
 
@@ -57,6 +58,9 @@ class FFTManager(private val fftLen: Int) {
 
     fun maxFreq(samplingFreq: Int): Float {
 
+
+        Log.d("TAG", samplingFreq.toString())
+
         val frequencyResolutionBPM = (samplingFreq/fftLen.toFloat())*60f
 
         // Ignore high values between minIndex and maxIndex as these are errors
@@ -76,7 +80,7 @@ class FFTManager(private val fftLen: Int) {
         }
 
         // Return average fft peak over last 10 fft windows
-        if (brI >= 10) {
+        if (brI >= 30) {
             brI = 0
         }
         breathingRates[brI] = indexOfMax*frequencyResolutionBPM
