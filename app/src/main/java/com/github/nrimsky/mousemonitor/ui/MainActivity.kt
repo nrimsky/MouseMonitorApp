@@ -32,6 +32,8 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import kotlin.math.pow
 
+// THIS IS AN OLD VERSION OF THE APP THAT DOES AN IN_APP FTT
+
 
 class MainActivity : AppCompatActivity() {
 
