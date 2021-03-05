@@ -1,20 +1,15 @@
 <resources>
     <string name="app_name">MouseMonitor</string>
     <string name="available_bluetooth_devices">Available bluetooth devices</string>
-    <string name="incoming_data">Incoming data</string>
+    <string name="incoming_data">Graph of breathing rate (BPM)</string>
     <string name="no_data_so_far">No data so far</string>
     <string name="no_available_bluetooth_devices_please_try_connecting_to_the_arduino_in_settings">No available bluetooth devices - please try connecting to the Arduino in settings</string>
-    <string name="moving_average_size">Moving average size (# samples)</string>
-    <string name="fft">FFT (Arbitrary units/BPM)</string>
-    <string name="fft_size">FFT Size (# samples)</string>
-    <string name="sampling_frequency_of_arduino">Sampling frequency of Arduino (Hz)</string>
     <string name="DEFAULT_LOWER_THRESHOLD">55</string>
     <string name="DEFAULT_UPPER_THRESHOLD">65</string>
-    <string name="DEFAULT_SAMPLING_FREQUENCY">100</string>
     <string name="lower_threshold_bpm">Lower threshold (BPM)</string>
     <string name="upper_threshold_bpm">Upper threshold (BPM)</string>
     <string name="DEFAULT_START_BPM">Not measuring</string>
     <string name="image_of_mouse">Image of mouse</string>
     <string name="mousemonitor">MouseMonitor</string>
-    <string name="settings">Settings...</string>
+    <string name="settings">Settings…</string>
 </resources>
