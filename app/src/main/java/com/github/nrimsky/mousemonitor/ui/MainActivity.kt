@@ -27,6 +27,7 @@ import com.github.nrimsky.mousemonitor.helpers.setupNumberTextField
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity() {
@@ -118,12 +119,19 @@ class MainActivity : AppCompatActivity() {
                     val readBuf = msg.obj as ByteArray
                     // construct a string from the valid bytes in the buffer
                     val readMessage = String(readBuf, 0, msg.arg1)
+                    Log.d(TAG, readMessage)
                     for (letter in readMessage) {
-                        chars = if (letter.toString() == ",") {
-                            processData(chars.toInt().toFloat())
-                            ""
+                        if (letter.toString() == ",") {
+                            chars = try {
+                                val numStr = chars.toInt().toFloat()
+                                processData(numStr)
+                                ""
+                            } catch (e: NumberFormatException) {
+                                Log.d(TAG, "Number format exception, chars: $chars letter: $letter")
+                                ""
+                            }
                         } else {
-                            chars.plus(letter)
+                            chars += letter
                         }
                     }
                 }
@@ -157,7 +165,7 @@ class MainActivity : AppCompatActivity() {
             val newReading = maTot/maBuf.size
             addPointToGraph(newReading)
             val mouseState = thresholdManager.getState(newReading)
-            binding.mainBpmDisplay.text = "$newReading BPM"
+            binding.mainBpmDisplay.text = "${(newReading * 100).roundToInt() /100f} BPM"
             binding.mainBpmDisplay.setBackgroundColor(getColor(mouseState))
         }
     }
